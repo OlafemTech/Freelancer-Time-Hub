@@ -1,4 +1,4 @@
-# Meeting Time Manager
+# Freelancer Time Hub
 
 A modern, responsive web application for managing meeting times across different time zones and parsing meeting links from various platforms.
 
@@ -156,4 +156,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Meeting history tracking
 
 ---
-Made with ❤️ by [Your Name]
+Made with ❤️ by Habeeb Oluwafemi (DigitalCivitas) Copyright © 2025
