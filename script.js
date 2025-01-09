@@ -1,108 +1,250 @@
-// Advanced time parsing utilities
+// Ultra-aggressive time parsing utilities
 const timeUtils = {
+    patterns: {
+        // ISO 8601 and variants
+        iso: [
+            /(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}(?::\d{2})?)/,
+            /(\d{4}\d{2}\d{2})T(\d{2}\d{2}\d{2})/,
+            /(\d{4}-\d{2}-\d{2})(?:[T ])(\d{2}(?::\d{2}){1,2})/
+        ],
+        // Unix timestamps
+        unix: [
+            /\b\d{13}\b/,  // milliseconds
+            /\b\d{10}\b/   // seconds
+        ],
+        // Date formats (exhaustive)
+        dates: [
+            // YYYY-MM-DD
+            /\b(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})\b/,
+            // DD-MM-YYYY
+            /\b(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})\b/,
+            // MM-DD-YYYY
+            /\b(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})\b/,
+            // YYYYMMDD
+            /\b(\d{4})(\d{2})(\d{2})\b/,
+            // Natural language dates
+            /\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2}(?:st|nd|rd|th)?,\s*\d{4}\b/i
+        ],
+        // Time formats (exhaustive)
+        times: [
+            // 24-hour format
+            /\b(\d{1,2}):(\d{2})(?::(\d{2}))?\b/,
+            // 12-hour format
+            /\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp][Mm])\b/,
+            // Military time
+            /\b([01]\d|2[0-3])(\d{2})\b/,
+            // Hour only
+            /\b(\d{1,2})\s*([AaPp][Mm])\b/,
+            // Natural language times
+            /\b(?:noon|midnight|morning|afternoon|evening)\b/i
+        ],
+        // Encoded formats
+        encoded: [
+            // URL encoded
+            /%[0-9A-Fa-f]{2}/,
+            // Base64
+            /[A-Za-z0-9+/=]{8,}/,
+            // JWT tokens
+            /eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/
+        ],
+        // Relative time
+        relative: [
+            /\b(?:today|tomorrow|yesterday)\b/i,
+            /\b(?:next|last)\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
+            /\bin\s+(\d+)\s+(?:minutes?|hours?|days?)\b/i,
+            /\b(\d+)\s+(?:minutes?|hours?|days?)\s+(?:from\s+now|ago)\b/i
+        ],
+        // Duration patterns
+        duration: [
+            /\b(\d+)\s*(?:min(?:ute)?s?|h(?:our)?s?)\b/i,
+            /\b(\d+):(\d{2})(?::(\d{2}))?\b/,
+            /\b(\d+)(?=min|h\b)/i,
+            /\bduration[=:]\s*(\d+)\b/i,
+            /\blength[=:]\s*(\d+)\b/i
+        ]
+    },
+
     parseDateTime: (input) => {
-        const patterns = {
-            // ISO 8601 formats
-            iso: /(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}(?::\d{2})?)/,
-            // Unix timestamp (milliseconds)
-            unix: /^\d{13}$/,
-            // Unix timestamp (seconds)
-            unixSeconds: /^\d{10}$/,
-            // Date string formats
-            dateStr: /(\d{4}[-/]\d{2}[-/]\d{2})/,
-            // Time string formats
-            timeStr: /(\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AaPp][Mm])?)/,
-            // Common date formats
-            commonDate: /(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})/,
-            // URL encoded formats
-            urlEncoded: /%(\d{4}%\d{2}%\d{2})/,
-            // Base64 encoded dates
-            base64Date: /[A-Za-z0-9+/=]{8,}/
-        };
+        if (!input) return null;
+        input = input.toString();
 
+        // Decode if encoded
+        let decodedInput = input;
         try {
-            let result = null;
-
-            // Try ISO format
-            const isoMatch = input.match(patterns.iso);
-            if (isoMatch) {
-                result = new Date(input);
+            if (/%[0-9A-Fa-f]{2}/.test(input)) {
+                decodedInput = decodeURIComponent(input);
             }
-
-            // Try Unix timestamp (ms)
-            else if (patterns.unix.test(input)) {
-                result = new Date(parseInt(input));
-            }
-
-            // Try Unix timestamp (s)
-            else if (patterns.unixSeconds.test(input)) {
-                result = new Date(parseInt(input) * 1000);
-            }
-
-            // Try date string
-            else if (patterns.dateStr.test(input)) {
-                const dateMatch = input.match(patterns.dateStr);
-                result = new Date(dateMatch[1]);
-            }
-
-            // Try common date format
-            else if (patterns.commonDate.test(input)) {
-                const match = input.match(patterns.commonDate);
-                const [_, d, m, y] = match;
-                const year = y.length === 2 ? '20' + y : y;
-                result = new Date(year, m - 1, d);
-            }
-
-            // Try URL encoded format
-            else if (patterns.urlEncoded.test(input)) {
-                const decoded = decodeURIComponent(input);
-                result = new Date(decoded);
-            }
-
-            // Try Base64 format
-            else if (patterns.base64Date.test(input)) {
-                try {
-                    const decoded = atob(input);
-                    if (decoded.match(patterns.dateStr)) {
-                        result = new Date(decoded);
-                    }
-                } catch (e) {
-                    console.warn('Base64 decode failed:', e);
-                }
-            }
-
-            if (result && !isNaN(result.getTime())) {
-                return {
-                    date: result.toLocaleDateString(),
-                    time: result.toLocaleTimeString(),
-                    timestamp: result.getTime()
-                };
+            if (/^[A-Za-z0-9+/=]{8,}$/.test(input)) {
+                decodedInput = atob(input);
             }
         } catch (e) {
-            console.warn('Date parsing failed:', e);
+            console.warn('Decoding failed:', e);
         }
+
+        // Try all date/time patterns
+        for (const isoPattern of timeUtils.patterns.iso) {
+            const match = decodedInput.match(isoPattern);
+            if (match) {
+                try {
+                    const date = new Date(decodedInput);
+                    if (!isNaN(date.getTime())) {
+                        return {
+                            date: date.toLocaleDateString(),
+                            time: date.toLocaleTimeString(),
+                            timestamp: date.getTime(),
+                            confidence: 'high'
+                        };
+                    }
+                } catch (e) {}
+            }
+        }
+
+        // Try Unix timestamps
+        for (const unixPattern of timeUtils.patterns.unix) {
+            const match = decodedInput.match(unixPattern);
+            if (match) {
+                const timestamp = match[0].length === 13 ? 
+                    parseInt(match[0]) : 
+                    parseInt(match[0]) * 1000;
+                const date = new Date(timestamp);
+                if (!isNaN(date.getTime())) {
+                    return {
+                        date: date.toLocaleDateString(),
+                        time: date.toLocaleTimeString(),
+                        timestamp: date.getTime(),
+                        confidence: 'high'
+                    };
+                }
+            }
+        }
+
+        // Extract date and time separately
+        let extractedDate = null;
+        let extractedTime = null;
+
+        // Try date patterns
+        for (const datePattern of timeUtils.patterns.dates) {
+            const match = decodedInput.match(datePattern);
+            if (match) {
+                try {
+                    const dateStr = match[0];
+                    const testDate = new Date(dateStr);
+                    if (!isNaN(testDate.getTime())) {
+                        extractedDate = testDate;
+                        break;
+                    }
+                } catch (e) {}
+            }
+        }
+
+        // Try time patterns
+        for (const timePattern of timeUtils.patterns.times) {
+            const match = decodedInput.match(timePattern);
+            if (match) {
+                try {
+                    const timeStr = match[0];
+                    const today = new Date();
+                    const testTime = new Date(`${today.toDateString()} ${timeStr}`);
+                    if (!isNaN(testTime.getTime())) {
+                        extractedTime = testTime;
+                        break;
+                    }
+                } catch (e) {}
+            }
+        }
+
+        // Try relative time patterns
+        for (const relPattern of timeUtils.patterns.relative) {
+            const match = decodedInput.match(relPattern);
+            if (match) {
+                const relativeTime = match[0].toLowerCase();
+                const currentDate = new Date(CURRENT_TIME);
+                
+                if (relativeTime === 'today') {
+                    return {
+                        date: currentDate.toLocaleDateString(),
+                        time: currentDate.toLocaleTimeString(),
+                        timestamp: currentDate.getTime(),
+                        confidence: 'medium'
+                    };
+                }
+                if (relativeTime === 'tomorrow') {
+                    currentDate.setDate(currentDate.getDate() + 1);
+                    return {
+                        date: currentDate.toLocaleDateString(),
+                        time: currentDate.toLocaleTimeString(),
+                        timestamp: currentDate.getTime(),
+                        confidence: 'medium'
+                    };
+                }
+                // Add more relative time handling...
+            }
+        }
+
+        // Combine extracted date and time
+        if (extractedDate || extractedTime) {
+            const result = new Date(CURRENT_TIME);
+            
+            if (extractedDate) {
+                result.setFullYear(extractedDate.getFullYear());
+                result.setMonth(extractedDate.getMonth());
+                result.setDate(extractedDate.getDate());
+            }
+            
+            if (extractedTime) {
+                result.setHours(extractedTime.getHours());
+                result.setMinutes(extractedTime.getMinutes());
+                result.setSeconds(extractedTime.getSeconds());
+            }
+
+            return {
+                date: result.toLocaleDateString(),
+                time: result.toLocaleTimeString(),
+                timestamp: result.getTime(),
+                confidence: extractedDate && extractedTime ? 'high' : 'medium'
+            };
+        }
+
         return null;
     },
 
     extractTimeFromURL: (url) => {
         const searchParams = new URLSearchParams(url.search);
-        const possibleParams = [
-            // Common time parameters
-            'time', 'startTime', 'start_time', 'start', 't',
-            'date', 'startDate', 'start_date', 'd',
-            'datetime', 'dateTime', 'date_time', 'dt',
-            'scheduled', 'scheduledTime', 'scheduled_time',
-            'when', 'timestamp', 'ts',
-            // Platform-specific parameters
-            'meetingTime', 'meeting_time', 'eventTime', 'event_time',
-            'scheduledStart', 'scheduled_start', 'begins', 'beginTime',
-            'startAt', 'start_at', 'startsAt', 'starts_at',
-            'scheduledFor', 'scheduled_for', 'plannedStart', 'planned_start'
-        ];
-
-        // Check URL hash parameters
         const hashParams = new URLSearchParams(url.hash.replace('#', ''));
         
+        // Expanded time parameter list
+        const possibleParams = [
+            // Standard parameters
+            'time', 'date', 'datetime', 'timestamp', 'ts',
+            // Start variations
+            'start', 'startTime', 'start_time', 'startAt', 'starts_at',
+            'startDate', 'start_date', 'beginTime', 'begin_time',
+            // Schedule variations
+            'scheduled', 'scheduledTime', 'scheduled_time', 'scheduledAt',
+            'scheduledDate', 'scheduled_date', 'when', 'schedule',
+            // Meeting variations
+            'meetingTime', 'meeting_time', 'meetingDate', 'meeting_date',
+            'meetingStart', 'meeting_start',
+            // Event variations
+            'eventTime', 'event_time', 'eventDate', 'event_date',
+            'eventStart', 'event_start',
+            // Other variations
+            't', 'd', 'dt', 'scheduled_start', 'starts', 'begins',
+            'from', 'until', 'planned', 'planned_start'
+        ];
+
+        // Check all parameters and URL segments
+        const allParts = [
+            ...Array.from(searchParams.entries()).map(([_, v]) => v),
+            ...Array.from(hashParams.entries()).map(([_, v]) => v),
+            ...url.pathname.split('/'),
+            url.username,
+            url.password,
+            url.hostname,
+            url.port
+        ].filter(Boolean);
+
+        // First try specific parameters
         for (const param of possibleParams) {
             const value = searchParams.get(param) || hashParams.get(param);
             if (value) {
@@ -111,10 +253,16 @@ const timeUtils = {
             }
         }
 
-        // Check URL path for encoded dates
-        const pathParts = url.pathname.split('/');
-        for (const part of pathParts) {
+        // Then try all URL parts
+        for (const part of allParts) {
             const parsed = timeUtils.parseDateTime(part);
+            if (parsed) return parsed;
+        }
+
+        // Try combinations of parts
+        for (let i = 0; i < allParts.length - 1; i++) {
+            const combined = `${allParts[i]} ${allParts[i + 1]}`;
+            const parsed = timeUtils.parseDateTime(combined);
             if (parsed) return parsed;
         }
 
@@ -125,40 +273,33 @@ const timeUtils = {
         const searchParams = new URLSearchParams(url.search);
         const hashParams = new URLSearchParams(url.hash.replace('#', ''));
         
+        // Expanded duration parameters
         const durationParams = [
-            'duration', 'dur', 'length', 'meetingLength',
-            'meeting_length', 'time_limit', 'timeLimit',
-            'period', 'interval', 'span', 'meetingDuration'
+            'duration', 'dur', 'length', 'time', 'period',
+            'meetingLength', 'meeting_length', 'eventLength',
+            'timeLimit', 'time_limit', 'limit', 'span',
+            'interval', 'duration_minutes', 'duration_hours',
+            'meeting_duration', 'event_duration', 'schedule_duration'
         ];
 
-        for (const param of durationParams) {
-            const value = searchParams.get(param) || hashParams.get(param);
-            if (value) {
-                // Convert various formats to minutes
-                if (/^\d+$/.test(value)) {
+        // Check all parameters and URL parts
+        const allParts = [
+            ...Array.from(searchParams.entries()).map(([_, v]) => v),
+            ...Array.from(hashParams.entries()).map(([_, v]) => v),
+            ...url.pathname.split('/')
+        ].filter(Boolean);
+
+        for (const part of allParts) {
+            for (const pattern of timeUtils.patterns.duration) {
+                const match = part.match(pattern);
+                if (match) {
+                    // Convert to minutes
+                    const value = parseInt(match[1]);
+                    if (part.toLowerCase().includes('h')) {
+                        return `${value * 60} minutes`;
+                    }
                     return `${value} minutes`;
                 }
-                if (/^(\d+)h$/i.test(value)) {
-                    const hours = value.match(/^(\d+)h$/i)[1];
-                    return `${hours * 60} minutes`;
-                }
-                if (/^(\d+)m$/i.test(value)) {
-                    const minutes = value.match(/^(\d+)m$/i)[1];
-                    return `${minutes} minutes`;
-                }
-                if (/^(\d+):(\d+)$/.test(value)) {
-                    const [hours, minutes] = value.split(':').map(Number);
-                    return `${hours * 60 + minutes} minutes`;
-                }
-            }
-        }
-
-        // Try to extract duration from URL path
-        const pathParts = url.pathname.split('/');
-        for (const part of pathParts) {
-            if (/^(\d+)(min|h)$/.test(part)) {
-                const [_, value, unit] = part.match(/^(\d+)(min|h)$/);
-                return unit === 'h' ? `${value * 60} minutes` : `${value} minutes`;
             }
         }
 
@@ -693,15 +834,48 @@ function parseMeetingLink(link) {
         if (platformKey) {
             platformParsers[platformKey]();
 
-            // Aggressive time and date extraction if not already found
+            // Ultra-aggressive time extraction
+            let timeFound = false;
+            
+            // Try platform-specific extraction first
             if (!meetingInfo.time || !meetingInfo.date) {
                 const timeInfo = timeUtils.extractTimeFromURL(url);
                 if (timeInfo) {
                     meetingInfo.time = timeInfo.time;
                     meetingInfo.date = timeInfo.date;
+                    timeFound = timeInfo.confidence === 'high';
                 }
             }
 
+            // If no high-confidence time found, try all URL parameters
+            if (!timeFound) {
+                for (const [key, value] of url.searchParams.entries()) {
+                    const timeInfo = timeUtils.parseDateTime(value);
+                    if (timeInfo && timeInfo.confidence === 'high') {
+                        meetingInfo.time = timeInfo.time;
+                        meetingInfo.date = timeInfo.date;
+                        timeFound = true;
+                        break;
+                    }
+                }
+            }
+
+            // If still no time found, try parsing URL path
+            if (!timeFound) {
+                const pathParts = url.pathname.split('/');
+                for (let i = 0; i < pathParts.length - 1; i++) {
+                    const combined = `${pathParts[i]} ${pathParts[i + 1]}`;
+                    const timeInfo = timeUtils.parseDateTime(combined);
+                    if (timeInfo) {
+                        meetingInfo.time = timeInfo.time;
+                        meetingInfo.date = timeInfo.date;
+                        timeFound = true;
+                        break;
+                    }
+                }
+            }
+
+            // Extract duration if not already found
             if (!meetingInfo.duration) {
                 const duration = timeUtils.extractDurationFromURL(url);
                 if (duration) {
@@ -709,16 +883,12 @@ function parseMeetingLink(link) {
                 }
             }
 
-            // If still no time/date found, try to extract from any URL parameter
-            if (!meetingInfo.time || !meetingInfo.date) {
-                for (const [key, value] of url.searchParams.entries()) {
-                    const timeInfo = timeUtils.parseDateTime(value);
-                    if (timeInfo) {
-                        meetingInfo.time = timeInfo.time;
-                        meetingInfo.date = timeInfo.date;
-                        break;
-                    }
-                }
+            // If no specific time found, use current time as fallback
+            if (!timeFound) {
+                const now = new Date(CURRENT_TIME);
+                meetingInfo.time = now.toLocaleTimeString();
+                meetingInfo.date = now.toLocaleDateString();
+                meetingInfo.inferredTime = true;
             }
         }
         return meetingInfo;
