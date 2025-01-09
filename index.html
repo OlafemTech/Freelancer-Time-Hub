@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freelancers Time Hub</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="app-header">
+            <h1>Freelancers Time Hub</h1>
+            <div class="settings-bar">
+                <select id="country-selector" class="country-selector">
+                    <option value="UTC">Select Country</option>
+                    <option value="Asia/Tokyo">Japan (Tokyo)</option>
+                    <option value="America/New_York">USA (New York)</option>
+                    <option value="Europe/London">UK (London)</option>
+                    <option value="Asia/Dubai">UAE (Dubai)</option>
+                    <option value="Asia/Shanghai">China (Shanghai)</option>
+                    <option value="Europe/Paris">France (Paris)</option>
+                    <option value="Asia/Singapore">Singapore</option>
+                    <option value="Australia/Sydney">Australia (Sydney)</option>
+                    <option value="Europe/Berlin">Germany (Berlin)</option>
+                    <option value="Asia/Seoul">South Korea (Seoul)</option>
+                    <option value="Asia/Kolkata">India (Mumbai)</option>
+                    <option value="Europe/Moscow">Russia (Moscow)</option>
+                    <option value="Africa/Lagos">Nigeria (Lagos)</option>
+                    <option value="Africa/Cairo">Egypt (Cairo)</option>
+                    <option value="America/Toronto">Canada (Toronto)</option>
+                    <option value="Europe/Rome">Italy (Rome)</option>
+                    <option value="Europe/Madrid">Spain (Madrid)</option>
+                    <option value="Europe/Amsterdam">Netherlands (Amsterdam)</option>
+                    <option value="Asia/Bangkok">Thailand (Bangkok)</option>
+                    <option value="Asia/Jakarta">Indonesia (Jakarta)</option>
+                    <option value="Europe/Stockholm">Sweden (Stockholm)</option>
+                    <option value="Europe/Oslo">Norway (Oslo)</option>
+                    <option value="Pacific/Auckland">New Zealand (Auckland)</option>
+                    <option value="America/Sao_Paulo">Brazil (São Paulo)</option>
+                    <option value="Asia/Hong_Kong">Hong Kong</option>
+                    <option value="Europe/Vienna">Austria (Vienna)</option>
+                    <option value="Europe/Brussels">Belgium (Brussels)</option>
+                    <option value="America/Mexico_City">Mexico (Mexico City)</option>
+                    <option value="Asia/Manila">Philippines (Manila)</option>
+                    <option value="Europe/Warsaw">Poland (Warsaw)</option>
+                    <option value="Europe/Copenhagen">Denmark (Copenhagen)</option>
+                    <option value="Asia/Riyadh">Saudi Arabia (Riyadh)</option>
+                    <option value="Africa/Johannesburg">South Africa (Johannesburg)</option>
+                    <option value="Europe/Dublin">Ireland (Dublin)</option>
+                    <option value="Asia/Tel_Aviv">Israel (Tel Aviv)</option>
+                    <option value="America/Argentina/Buenos_Aires">Argentina (Buenos Aires)</option>
+                    <option value="Europe/Helsinki">Finland (Helsinki)</option>
+                    <option value="Asia/Kuala_Lumpur">Malaysia (Kuala Lumpur)</option>
+                    <option value="Europe/Prague">Czech Republic (Prague)</option>
+                </select>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <section class="clock-section">
+                <div class="clock-container local-clock">
+                    <h2><i class="fas fa-clock"></i> Local Time</h2>
+                    <div class="time-display">
+                        <div id="time" class="time">--:--:--</div>
+                        <div id="date" class="date">--</div>
+                        <div id="timezone" class="timezone">--</div>
+                    </div>
+                </div>
+
+                <div class="clock-container host-clock">
+                    <h2><i class="fas fa-globe"></i> Host Time</h2>
+                    <div class="time-display">
+                        <div id="host-time" class="time">--:--:--</div>
+                        <div id="host-date" class="date">--</div>
+                        <div id="host-timezone" class="timezone">--</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="tools-section">
+                <div class="timer-container">
+                    <h2><i class="fas fa-stopwatch"></i> Timer</h2>
+                    <div class="current-timer" id="timer-display">00:00:00</div>
+                    <div class="timer-controls">
+                        <button id="start-timer" class="control-button">
+                            <i class="fas fa-play"></i> Start
+                        </button>
+                        <button id="pause-timer" class="control-button">
+                            <i class="fas fa-pause"></i> Pause
+                        </button>
+                        <button id="stop-timer" class="control-button">
+                            <i class="fas fa-stop"></i> Stop
+                        </button>
+                        <button id="reset-timer" class="control-button">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                    </div>
+                </div>
+
+                <div class="meeting-section">
+                    <h2><i class="fas fa-video"></i> Meeting Link Parser</h2>
+                    <div class="meeting-input">
+                        <input type="text" id="meeting-link" placeholder="Paste your meeting link here..." />
+                        <button id="parse-button" class="control-button">
+                            <i class="fas fa-search"></i> Parse
+                        </button>
+                    </div>
+                    <div class="meeting-details" id="meeting-details">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <label><i class="fas fa-video"></i> Platform</label>
+                                <div id="platform" class="info-value">-</div>
+                            </div>
+                            <div class="info-item">
+                                <label><i class="fas fa-hashtag"></i> Meeting ID</label>
+                                <div id="meeting-id" class="info-value">-</div>
+                            </div>
+                            <div class="info-item">
+                                <label><i class="fas fa-clock"></i> Meeting Time</label>
+                                <div id="meeting-time" class="info-value">-</div>
+                            </div>
+                            <div class="info-item">
+                                <label><i class="fas fa-calendar"></i> Meeting Date</label>
+                                <div id="meeting-date" class="info-value">-</div>
+                            </div>
+                            <div class="info-item">
+                                <label><i class="fas fa-hourglass"></i> Duration</label>
+                                <div id="meeting-duration" class="info-value">-</div>
+                            </div>
+                            <div class="info-item">
+                                <label><i class="fas fa-key"></i> Password</label>
+                                <div id="meeting-password" class="info-value">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>Developed by: <a href="mailto:Digitalcivitas855@gmail.com" class="dev-link">
+                <i class="fas fa-envelope"></i>
+                Digitalcivitas855@gmail.com
+            </a>
+            <span class="separator">|</span>
+            <a href="https://wa.me/2348131017099" class="dev-link" target="_blank">
+                <i class="fab fa-whatsapp"></i>
+                +2348131017099
+            </a></p>
+        </footer>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
