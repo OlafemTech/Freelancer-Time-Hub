@@ -13,28 +13,77 @@ A modern, responsive web application for managing meeting times across different
 - Support for 40+ international time zones
 
 ### ⚡ Meeting Link Parser
-Supports parsing meeting links from major platforms:
+Supports parsing meeting links from 35+ platforms:
 
-#### Zoom
-- Meeting IDs and passwords
-- Scheduled meeting times
-- Meeting duration
-- Support for regular meetings and webinars
+#### Enterprise Solutions
+- Zoom (Regular, Webinar, Scheduled)
+- Microsoft Teams (Regular, Live Events)
+- Cisco Webex
+- BlueJeans
+- GoToMeeting
+- RingCentral
+- 8x8 Meet
+- Lifesize
+- StarLeaf
+- Amazon Chime
 
-#### Google Meet
-- Meeting codes
-- Scheduled times
-- Custom meeting links
+#### Web-Based Solutions
+- Google Meet (Regular, Education, PWA)
+- Jitsi Meet
+- Whereby
+- Join.me
+- UberConference
+- Livestorm
+- Demio
+- MeetFox
+- BigBlueButton
+- Zoho Meeting
 
-#### Microsoft Teams
-- Meeting IDs
-- Start times and duration
-- Direct meeting links
+#### Business Communication
+- Skype (Regular, Business)
+- Skype for Business EMEA
+- Slack Huddle
+- Discord
+- Microsoft Teams Live
 
-#### Cisco Webex
-- Meeting numbers
-- Passwords
-- Scheduled times and duration
+#### Mobile & Desktop
+- Google Duo
+- FaceTime
+- AnyDesk Meeting
+- TeamViewer Meeting
+- JioMeet
+
+#### Scheduling Platforms
+- Cal.com
+- Vonage Meetings
+- MeetFox
+
+Example Links:
+```
+Enterprise:
+- https://zoom.us/j/1234567890?pwd=abc123
+- https://teams.microsoft.com/l/meetup-join/...
+- https://company.webex.com/meet/123456789
+- https://bluejeans.com/123456789
+- https://global.gotomeeting.com/join/123456789
+
+Web-Based:
+- https://meet.google.com/abc-defg-hij
+- https://meet.jit.si/RoomName
+- https://whereby.com/roomname
+- https://join.me/123-456-789
+- https://uberconference.com/roomname
+
+Mobile & Desktop:
+- https://duo.google.com/call?id=123456789
+- facetime.apple.com/join?id=123456789
+- https://meet.anydesk.com/123456789
+- https://meet.teamviewer.com/123456789
+
+Scheduling:
+- https://cal.com/username/15min
+- https://meetfox.com/username/service
+```
 
 ### ⏱️ Timer Functions
 - Start/Stop/Pause functionality
@@ -51,12 +100,12 @@ Supports parsing meeting links from major platforms:
 ### Installation
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/meeting-time-manager.git
+git clone https://github.com/yourusername/freelancer-time-hub.git
 ```
 
 2. Navigate to the project directory:
 ```bash
-cd meeting-time-manager
+cd freelancer-time-hub
 ```
 
 3. Open `index.html` in your web browser
@@ -73,6 +122,7 @@ cd meeting-time-manager
 3. Click "Parse" or press Enter
 4. View the extracted meeting details:
    - Platform
+   - Host (for Cal.com)
    - Meeting ID
    - Password (if available)
    - Meeting Time
@@ -113,7 +163,7 @@ Add or remove time zones in the `country-selector` dropdown in `index.html`.
 
 ### File Structure
 ```
-meeting-time-manager/
+freelancer-time-hub/
 ├── index.html
 ├── styles.css
 ├── script.js
@@ -146,6 +196,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Font Awesome for icons
 - Time zone data from IANA Time Zone Database
 - Meeting link parsing inspired by various platform APIs
+- Cal.com for scheduling integration
 
 ## 📈 Future Enhancements
 - Calendar integration
@@ -154,6 +205,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - More meeting platforms support
 - Custom themes
 - Meeting history tracking
+- Direct Cal.com calendar integration
+- Bulk meeting link processing
+- Meeting reminder system
+- Export meeting details to calendar
 
 ---
 Made with ❤️ by Habeeb Oluwafemi (DigitalCivitas) Copyright © 2025

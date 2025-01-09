@@ -286,145 +286,260 @@ function parseMeetingLink(link) {
         time: '',
         date: '',
         duration: '',
+        host: '',
+        joinUrl: '',
         error: null
     };
 
     try {
         const url = new URL(link);
+        const hostname = url.hostname.toLowerCase();
         
-        // Zoom Meeting Parser
-        if (url.hostname.includes('zoom.us')) {
-            meetingInfo.platform = 'Zoom';
-            
-            // Extract meeting ID
-            const pathParts = url.pathname.split('/');
-            const jIndex = pathParts.indexOf('j');
-            if (jIndex !== -1 && pathParts[jIndex + 1]) {
-                meetingInfo.meetingId = pathParts[jIndex + 1];
-            } else {
-                const meetingIdMatch = url.pathname.match(/\/(\d{9,11})/);
-                if (meetingIdMatch) {
-                    meetingInfo.meetingId = meetingIdMatch[1];
+        // Helper function to extract time from various formats
+        const parseTime = (timeStr) => {
+            try {
+                const date = new Date(timeStr);
+                return {
+                    time: date.toLocaleTimeString(),
+                    date: date.toLocaleDateString()
+                };
+            } catch (e) {
+                console.warn('Could not parse time:', e);
+                return null;
+            }
+        };
+
+        // Platform-specific parsers
+        const platformParsers = {
+            // Existing platforms
+            'zoom.us': () => {
+                meetingInfo.platform = 'Zoom';
+                const pathParts = url.pathname.split('/');
+                const jIndex = pathParts.indexOf('j');
+                if (jIndex !== -1 && pathParts[jIndex + 1]) {
+                    meetingInfo.meetingId = pathParts[jIndex + 1];
+                }
+                meetingInfo.password = url.searchParams.get('pwd') || '';
+            },
+
+            'teams.microsoft.com': () => {
+                meetingInfo.platform = 'Microsoft Teams';
+                const meetingIdMatch = url.pathname.match(/\/([a-zA-Z0-9_-]{12,})/);
+                if (meetingIdMatch) meetingInfo.meetingId = meetingIdMatch[1];
+            },
+
+            'meet.google.com': () => {
+                meetingInfo.platform = 'Google Meet';
+                meetingInfo.meetingId = url.pathname.split('/').pop();
+            },
+
+            'webex.com': () => {
+                meetingInfo.platform = 'Cisco Webex';
+                const meetingMatch = url.pathname.match(/\/(\d{9,11})/);
+                if (meetingMatch) meetingInfo.meetingId = meetingMatch[1];
+            },
+
+            'cal.com': () => {
+                meetingInfo.platform = 'Cal.com';
+                const pathParts = url.pathname.split('/').filter(Boolean);
+                if (pathParts.length >= 2) {
+                    meetingInfo.host = pathParts[0];
+                    meetingInfo.meetingId = pathParts[1];
+                }
+            },
+
+            // New platforms
+            'bluejeans.com': () => {
+                meetingInfo.platform = 'BlueJeans';
+                meetingInfo.meetingId = url.pathname.split('/').pop();
+            },
+
+            'gotomeeting.com': () => {
+                meetingInfo.platform = 'GoToMeeting';
+                meetingInfo.meetingId = url.pathname.match(/\/(\d{9})/)?.[1] || '';
+            },
+
+            'join.me': () => {
+                meetingInfo.platform = 'Join.me';
+                meetingInfo.meetingId = url.pathname.split('/').pop();
+            },
+
+            'whereby.com': () => {
+                meetingInfo.platform = 'Whereby';
+                meetingInfo.host = url.pathname.split('/')[1];
+                meetingInfo.joinUrl = link;
+            },
+
+            'meet.jit.si': () => {
+                meetingInfo.platform = 'Jitsi Meet';
+                meetingInfo.meetingId = url.pathname.split('/').pop();
+            },
+
+            'chime.aws': () => {
+                meetingInfo.platform = 'Amazon Chime';
+                meetingInfo.meetingId = url.searchParams.get('meeting_ID');
+            },
+
+            'meet.starleaf.com': () => {
+                meetingInfo.platform = 'StarLeaf';
+                meetingInfo.meetingId = url.pathname.split('/').pop();
+            },
+
+            'lifesize.com': () => {
+                meetingInfo.platform = 'Lifesize';
+                meetingInfo.meetingId = url.pathname.match(/\/(\w+)$/)?.[1] || '';
+            },
+
+            'meet.ringcentral.com': () => {
+                meetingInfo.platform = 'RingCentral';
+                meetingInfo.meetingId = url.pathname.split('/').pop();
+            },
+
+            '8x8.vc': () => {
+                meetingInfo.platform = '8x8 Meet';
+                meetingInfo.meetingId = url.pathname.split('/').pop();
+            },
+
+            'meet.goto.com': () => {
+                meetingInfo.platform = 'GoTo Meeting';
+                meetingInfo.meetingId = url.pathname.match(/\/(\d{9})/)?.[1] || '';
+            },
+
+            'vonage.com': () => {
+                meetingInfo.platform = 'Vonage Meetings';
+                meetingInfo.meetingId = url.searchParams.get('meeting_id');
+            },
+
+            'meet.lync.com': () => {
+                meetingInfo.platform = 'Skype for Business';
+                meetingInfo.meetingId = url.searchParams.get('conference_id');
+            },
+
+            'meetingsemea.lync.com': () => {
+                meetingInfo.platform = 'Skype for Business (EMEA)';
+                meetingInfo.meetingId = url.searchParams.get('conference_id');
+            },
+
+            'uberconference.com': () => {
+                meetingInfo.platform = 'UberConference';
+                meetingInfo.host = url.pathname.split('/')[1];
+            },
+
+            'meet.google.com/lookup': () => {
+                meetingInfo.platform = 'Google Meet (Education)';
+                meetingInfo.meetingId = url.pathname.split('/lookup/').pop();
+            },
+
+            'duo.google.com': () => {
+                meetingInfo.platform = 'Google Duo';
+                meetingInfo.meetingId = url.searchParams.get('call_id');
+            },
+
+            'facetime.apple.com': () => {
+                meetingInfo.platform = 'FaceTime';
+                meetingInfo.meetingId = url.searchParams.get('call_id');
+            },
+
+            'teams.live.com': () => {
+                meetingInfo.platform = 'Microsoft Teams Live';
+                meetingInfo.meetingId = url.searchParams.get('event_id');
+            },
+
+            'skype.com': () => {
+                meetingInfo.platform = 'Skype';
+                meetingInfo.meetingId = url.pathname.split('/').pop();
+            },
+
+            'meet.anydesk.com': () => {
+                meetingInfo.platform = 'AnyDesk Meeting';
+                meetingInfo.meetingId = url.pathname.split('/').pop();
+            },
+
+            'meet.teamviewer.com': () => {
+                meetingInfo.platform = 'TeamViewer Meeting';
+                meetingInfo.meetingId = url.searchParams.get('meeting_id');
+            },
+
+            'discord.com': () => {
+                meetingInfo.platform = 'Discord';
+                const parts = url.pathname.split('/');
+                meetingInfo.meetingId = parts[parts.length - 1];
+            },
+
+            'slack.com': () => {
+                meetingInfo.platform = 'Slack Huddle';
+                meetingInfo.meetingId = url.searchParams.get('thread_ts');
+            },
+
+            'meet.zoho.com': () => {
+                meetingInfo.platform = 'Zoho Meeting';
+                meetingInfo.meetingId = url.pathname.split('/').pop();
+            },
+
+            'bigbluebutton.org': () => {
+                meetingInfo.platform = 'BigBlueButton';
+                meetingInfo.meetingId = url.searchParams.get('meeting_id');
+            },
+
+            'meet.jio.com': () => {
+                meetingInfo.platform = 'JioMeet';
+                meetingInfo.meetingId = url.pathname.split('/').pop();
+            },
+
+            'meet.google.com/native': () => {
+                meetingInfo.platform = 'Google Meet (PWA)';
+                meetingInfo.meetingId = url.searchParams.get('meeting_code');
+            },
+
+            'livestorm.co': () => {
+                meetingInfo.platform = 'Livestorm';
+                meetingInfo.meetingId = url.pathname.split('/').pop();
+            },
+
+            'demio.com': () => {
+                meetingInfo.platform = 'Demio';
+                meetingInfo.meetingId = url.pathname.split('/').pop();
+            },
+
+            'meetfox.com': () => {
+                meetingInfo.platform = 'MeetFox';
+                meetingInfo.host = url.pathname.split('/')[1];
+                meetingInfo.meetingId = url.pathname.split('/')[2];
+            }
+        };
+
+        // Find and execute the appropriate parser
+        const platformKey = Object.keys(platformParsers).find(key => hostname.includes(key));
+        if (platformKey) {
+            platformParsers[platformKey]();
+
+            // Common parameters that might be present in any platform
+            const timeParams = [
+                url.searchParams.get('time'),
+                url.searchParams.get('startTime'),
+                url.searchParams.get('start_time'),
+                url.searchParams.get('date')
+            ].filter(Boolean);
+
+            if (timeParams.length > 0) {
+                const parsedTime = parseTime(timeParams[0]);
+                if (parsedTime) {
+                    meetingInfo.time = parsedTime.time;
+                    meetingInfo.date = parsedTime.date;
                 }
             }
 
-            // Extract password
-            const pwd = url.searchParams.get('pwd');
-            if (pwd) meetingInfo.password = pwd;
+            const durationParams = [
+                url.searchParams.get('duration'),
+                url.searchParams.get('dur'),
+                url.searchParams.get('length')
+            ].find(Boolean);
 
-            // Extract time and duration from URL parameters
-            const time = url.searchParams.get('time');
-            if (time) {
-                try {
-                    const meetingTime = new Date(decodeURIComponent(time));
-                    meetingInfo.time = meetingTime.toLocaleTimeString();
-                    meetingInfo.date = meetingTime.toLocaleDateString();
-                } catch (e) {
-                    console.warn('Could not parse meeting time:', e);
-                }
+            if (durationParams) {
+                meetingInfo.duration = `${durationParams} minutes`;
             }
-
-            const duration = url.searchParams.get('duration');
-            if (duration) {
-                meetingInfo.duration = `${duration} minutes`;
-            }
-        }
-        
-        // Google Meet Parser
-        else if (url.hostname.includes('meet.google.com')) {
-            meetingInfo.platform = 'Google Meet';
-            
-            // Extract meeting code
-            const meetCode = url.pathname.split('/').pop();
-            if (meetCode) {
-                meetingInfo.meetingId = meetCode;
-            }
-
-            // Extract time from URL parameters
-            const time = url.searchParams.get('time');
-            if (time) {
-                try {
-                    const meetingTime = new Date(parseInt(time));
-                    meetingInfo.time = meetingTime.toLocaleTimeString();
-                    meetingInfo.date = meetingTime.toLocaleDateString();
-                } catch (e) {
-                    console.warn('Could not parse meeting time:', e);
-                }
-            }
-        }
-        
-        // Microsoft Teams Parser
-        else if (url.hostname.includes('teams.microsoft.com')) {
-            meetingInfo.platform = 'Microsoft Teams';
-            
-            // Extract meeting ID
-            const meetingIdMatch = url.pathname.match(/\/([a-zA-Z0-9_-]{12,})/);
-            if (meetingIdMatch) {
-                meetingInfo.meetingId = meetingIdMatch[1];
-            }
-
-            // Parse meeting details from URL parameters
-            const params = new URLSearchParams(url.hash.slice(1));
-            
-            const startTime = params.get('startTime');
-            if (startTime) {
-                try {
-                    const meetingTime = new Date(startTime);
-                    meetingInfo.time = meetingTime.toLocaleTimeString();
-                    meetingInfo.date = meetingTime.toLocaleDateString();
-                } catch (e) {
-                    console.warn('Could not parse meeting time:', e);
-                }
-            }
-
-            const duration = params.get('duration');
-            if (duration) {
-                meetingInfo.duration = `${duration} minutes`;
-            }
-        }
-        
-        // Cisco Webex Parser
-        else if (url.hostname.includes('webex.com')) {
-            meetingInfo.platform = 'Cisco Webex';
-            
-            // Extract meeting number
-            const meetingMatch = url.pathname.match(/\/(\d{9,11})/);
-            if (meetingMatch) {
-                meetingInfo.meetingId = meetingMatch[1];
-            }
-
-            // Extract password
-            const password = url.searchParams.get('password');
-            if (password) {
-                meetingInfo.password = password;
-            }
-
-            // Parse meeting time and duration
-            const startTime = url.searchParams.get('startTime');
-            if (startTime) {
-                try {
-                    const meetingTime = new Date(parseInt(startTime));
-                    meetingInfo.time = meetingTime.toLocaleTimeString();
-                    meetingInfo.date = meetingTime.toLocaleDateString();
-                } catch (e) {
-                    console.warn('Could not parse meeting time:', e);
-                }
-            }
-
-            const duration = url.searchParams.get('duration');
-            if (duration) {
-                meetingInfo.duration = `${duration} minutes`;
-            }
-        }
-
-        // If no platform was identified
-        if (!meetingInfo.platform) {
+        } else {
             throw new Error('Unsupported meeting platform');
-        }
-
-        // If no meeting ID was found
-        if (!meetingInfo.meetingId) {
-            throw new Error('Could not extract meeting ID');
         }
 
         return meetingInfo;
@@ -445,7 +560,8 @@ function updateMeetingInfo(info) {
         password: document.getElementById('meeting-password'),
         time: document.getElementById('meeting-time'),
         date: document.getElementById('meeting-date'),
-        duration: document.getElementById('meeting-duration')
+        duration: document.getElementById('meeting-duration'),
+        host: document.getElementById('meeting-host')
     };
 
     // Helper function to update element with animation
